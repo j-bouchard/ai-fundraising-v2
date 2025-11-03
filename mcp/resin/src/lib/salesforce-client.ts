@@ -8,6 +8,8 @@
  * - SOQL queries, record creation, record updates
  */
 
+import { createLogger } from "./logger";
+
 // ------------------------------------------------------------
 // Types & Interfaces
 // ------------------------------------------------------------
@@ -138,16 +140,17 @@ export class SalesforceClient {
   }
 
   async connect(): Promise<void> {
+    const logger = createLogger({ module: "salesforce-client" });
     try {
       const { accessToken, instanceUrl } = await this.refreshAccessToken();
       this.accessToken = accessToken;
       this.config.instanceUrl = instanceUrl;
-      console.log("Connected to Salesforce");
+      logger.info("Connected to Salesforce", { instanceUrl });
     } catch (error) {
-      console.warn(
-        "OAuth refresh failed, attempting username/password if provided:",
-        error,
-      );
+      logger.warn("OAuth refresh failed", {
+        hasUsernamePassword: !!(this.config.username && this.config.password),
+        error: error instanceof Error ? error.message : String(error)
+      });
       if (
         !this.config.username ||
         !this.config.password ||

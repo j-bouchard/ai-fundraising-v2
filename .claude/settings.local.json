@@ -5,7 +5,8 @@
       "mcp__context7__get-library-docs",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat(mill): reorganize scripts and add analysis recipe skill\n\nReorganize Mill recipe runner scripts into dedicated scripts/mill/ directory\nand create new goose-recipe-analysis skill for document analysis workflows.\n\nBREAKING CHANGE: Script paths changed from mill/run-*.sh to scripts/mill/run-*.sh\n\nChanges:\n- Move recipe runner scripts to scripts/mill/ directory\n- Create goose-recipe-analysis skill for document analysis recipes\n- Add fundraising-data-analysis-followup spec and recipe\n- Update all documentation to reflect new script locations\n- Add comprehensive devlog documenting the changes\n\nNew Structure:\n  mill/\n    spec/     - Workflow specifications\n    recipes/  - Recipe YAML files\n  scripts/mill/\n    run-*.sh  - Runner scripts\n\nBenefits:\n- Clear separation between config (mill/), docs (specs), and execution (scripts/)\n- Follows standard project conventions (matches scripts/devops/ pattern)\n- Supports two recipe types: data extraction (MCP) and analysis (file-based)\n- Scalable structure that won''t clutter as recipes grow\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
