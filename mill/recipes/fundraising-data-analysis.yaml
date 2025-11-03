@@ -1,0 +1,130 @@
+version: "1.0.0"
+title: "Fundraising Data Analysis"
+description: "Comprehensive analysis of fundraising performance and donor trends using the resin MCP server"
+
+parameters:
+  - key: analysis_period
+    input_type: string
+    requirement: optional
+    description: "Time period for analysis (e.g., 'last 12 months', 'current year', '2024')"
+    default: "current year"
+
+  - key: output_file
+    input_type: string
+    requirement: optional
+    description: "Path where the analysis report should be saved"
+    default: "./fundraising-analysis-report.md"
+
+  - key: RESIN_API_KEY
+    input_type: string
+    requirement: optional
+    description: "API key for Resin MCP server authentication"
+    default: "igtcRlUi6YF2GGboiHrKRxUeVEXITDOo"
+
+instructions: |
+  You are performing a comprehensive fundraising data analysis using the resin MCP server.
+
+  **IMPORTANT: MCP Server Access**
+  The resin MCP server is available at: https://resin.mpazbot.workers.dev/mcp
+  Authentication: Use Bearer token with API key: {{ RESIN_API_KEY }}
+
+  You can access the resin MCP server tools by making HTTP requests with the Authorization header.
+  The server provides tools for querying Salesforce fundraising data including:
+  - run_soql: Execute SOQL queries
+  - query_donors: Query donors using natural language criteria
+  - create_record: Create Salesforce records
+  - update_record: Update Salesforce records
+
+  Follow these steps in order:
+
+  1. **Revenue Analysis**
+     - Query total revenue by year, quarter, and month for {{ analysis_period }}
+     - Use the resin MCP server's query capabilities to aggregate Opportunity amounts
+     - Calculate year-over-year growth rates
+     - Identify seasonal patterns and trends
+
+  2. **Donor Retention Analysis**
+     - Calculate retention rate: (donors who gave this year AND last year) / (total donors last year)
+     - Query donors who contributed in both periods
+     - Calculate new donor acquisition rate
+     - Identify lapsed donors (gave last year but not this year)
+
+  3. **Donor Segmentation**
+     - Categorize donors: monthly/recurring vs one-time
+     - Calculate average gift size by segment
+     - Identify upgrade candidates (one-time → recurring)
+     - Analyze giving frequency patterns
+
+  4. **Pipeline and Moves Management**
+     - Query prospects in cultivation by stage
+     - Calculate average time in each pipeline stage
+     - Identify stalled opportunities (no activity in 90+ days)
+     - Track conversion rates by stage
+
+  5. **Campaign Performance**
+     - Analyze response rates by appeal type
+     - Calculate ROI for major campaigns
+     - Compare campaign performance year-over-year
+     - Identify top-performing channels
+
+  6. **Generate Report**
+     - Create a comprehensive markdown report with all findings
+     - Include an executive summary with key metrics and trends
+     - Add visualizations where appropriate (use markdown tables)
+     - Provide actionable recommendations based on data
+     - Save the report to {{ output_file }}
+
+prompt: |
+  Perform a comprehensive fundraising data analysis for {{ analysis_period }} using the resin MCP server.
+
+  Generate a detailed markdown report covering:
+  - Executive summary with key metrics and trends
+  - Revenue analysis (by year, quarter, month)
+  - Donor retention analysis with retention rates
+  - Donor segmentation (recurring vs one-time)
+  - Pipeline and moves management (prospects by stage)
+  - Campaign performance (response rates by appeal type)
+
+  Save the complete analysis to {{ output_file }}.
+
+  Use data-driven insights to provide actionable recommendations for improving fundraising performance.
+
+response:
+  json_schema:
+    type: object
+    properties:
+      report_path:
+        type: string
+        description: "Path to the generated analysis report"
+      executive_summary:
+        type: object
+        properties:
+          total_revenue:
+            type: string
+            description: "Total revenue for the analysis period"
+          retention_rate:
+            type: string
+            description: "Donor retention rate percentage"
+          key_findings:
+            type: array
+            items:
+              type: string
+            description: "List of 3-5 key findings from the analysis"
+          recommendations:
+            type: array
+            items:
+              type: string
+            description: "List of 3-5 actionable recommendations"
+        required: [total_revenue, retention_rate, key_findings, recommendations]
+      status:
+        type: string
+        enum: [completed, partial, failed]
+        description: "Analysis completion status"
+    required: [report_path, executive_summary, status]
+
+retry:
+  max_retries: 2
+  checks:
+    - type: shell
+      command: "test -f {{ output_file }}"
+  on_failure: "rm -f {{ output_file }}"

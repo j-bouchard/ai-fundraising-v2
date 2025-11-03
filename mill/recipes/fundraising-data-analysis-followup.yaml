@@ -1,0 +1,214 @@
+version: "1.0.0"
+title: "Fundraising Report Analysis"
+description: "Transform fundraising reports into actionable intelligence with time-aware recommendations and data quality assessments"
+
+# Input parameters
+parameters:
+  - key: input_file
+    input_type: file
+    requirement: required
+    description: "Path to the fundraising report markdown file to analyze"
+
+  - key: output_file
+    input_type: string
+    requirement: optional
+    default: "fundraising-analysis-output.md"
+    description: "Path where the analysis report should be saved"
+
+# Analysis instructions and framework
+instructions: |
+  # Fundraising Report Analysis
+
+  You are analyzing a previously generated fundraising report to extract insights, validate data quality, and generate prioritized action items.
+
+  ## Current Context
+  Today's date: $(date +%Y-%m-%d)
+  Current quarter: Q$(( ($(date +%-m)-1)/3+1 ))
+  Current year: $(date +%Y)
+
+  ## Input Report
+  {{ input_file }}
+
+  ## Analysis Framework
+
+  ### 1. Context Validation
+  - Extract report date and period
+  - Determine current fiscal position (Q1/Q2/Q3/Q4)
+  - Identify time-sensitive opportunities
+  - Flag stale or irrelevant timeframes
+
+  ### 2. Financial Performance Analysis
+
+  #### Extract Core Metrics
+  - Total revenue (current period)
+  - Revenue comparison (YoY, QoQ)
+  - Percentage change and direction
+  - Average gift size
+  - Total opportunities/donors
+
+  #### Calculate Derived Metrics
+  - Revenue per quarter/month
+  - Seasonal distribution patterns
+  - Donor concentration risk (top donor % of total)
+  - Pipeline velocity indicators
+
+  ### 3. Pipeline Health Assessment
+
+  #### Opportunity Distribution
+  - Count by stage (Prospecting, Qualification, Cultivation, Solicitation, Pledged)
+  - Stage percentages and flow analysis
+  - Identify bottlenecks and gaps
+
+  #### Risk Indicators
+  - Pipeline size vs revenue target
+  - Stage concentration issues
+  - Conversion rate implications
+
+  ### 4. Donor Segmentation Analysis
+
+  #### Segment Key Groups
+  - Major donors ($10K+) - count and impact
+  - Mid-level donors ($1K-$9.9K)
+  - Annual fund donors (<$1K)
+  - Recurring vs one-time donors
+
+  #### Retention Analysis
+  - Multi-year donor patterns
+  - Churn indicators
+  - Upgrade/downgrade trends
+
+  ### 5. Seasonal & Trend Analysis
+
+  #### Revenue Timing
+  - Quarterly performance comparison
+  - Identify strongest/weakest periods
+  - Calculate seasonal variance
+  - Flag timing opportunities
+
+  #### Year-over-Year Trends
+  - Growth/decline patterns
+  - Trajectory analysis
+  - Benchmark comparisons
+
+  ## Action Item Generation Rules
+
+  ### Time-Sensitive Actions (Based on Current Date)
+  - **Q1:** Focus on sustaining momentum, planning Q2
+  - **Q2:** Address mid-year strategy, prepare summer campaigns
+  - **Q3:** Execute summer initiatives, prep year-end campaigns
+  - **Q4:** Maximize year-end giving, plan next year
+
+  ### Priority Classification System
+
+  #### IMMEDIATE (This Week)
+  - Active solicitation opportunities
+  - Critical donor relationship risks
+  - Pipeline bottlenecks requiring intervention
+
+  #### SHORT-TERM (30 Days)
+  - Seasonal campaign execution
+  - Pipeline development activities
+  - Performance gap analysis
+
+  #### MEDIUM-TERM (90 Days)
+  - Strategic initiatives
+  - System improvements
+  - Capacity building
+
+  #### STRATEGIC (6+ Months)
+  - Program development
+  - Infrastructure changes
+  - Long-term growth planning
+
+  ### Action Item Templates
+
+  Use these templates to create specific, actionable recommendations:
+
+  #### Pipeline Actions
+  - "Contact [N] prospects in [Stage] - [specific action]"
+  - "Move [N] opportunities from [Stage A] to [Stage B]"
+  - "Close [N] active solicitations by [specific date]"
+
+  #### Revenue Actions
+  - "Execute [seasonal] campaign to address [specific gap]"
+  - "Increase [metric] from [current] to [target] by [method]"
+  - "Analyze [time period] performance to identify [specific issue]"
+
+  #### Risk Mitigation
+  - "Develop contingency for [specific risk] concentration"
+  - "Diversify [specific area] to reduce dependency"
+  - "Monitor [metric] with [frequency] reviews"
+
+  ## Data Quality Assessment
+
+  ### Required Validations
+  - Revenue figures reconcile across sections
+  - Percentages add up to 100%
+  - Date ranges are consistent
+  - Donor counts match opportunity counts
+
+  ### Flag Missing Data
+  - Incomplete segmentation
+  - Missing historical comparisons
+  - Undefined metrics or calculations
+  - Vague estimates vs actual data
+
+  ### Consistency Checks
+  - Narrative matches quantitative data
+  - Recommendations align with analysis
+  - Timeframes are realistic
+  - Resource requirements are specified
+
+  ## Output Structure
+
+  Create a comprehensive analysis report with the following structure:
+
+  ### Executive Summary
+  - Key finding headlines (3-5 bullets)
+  - Primary recommendations
+  - Critical risk alerts
+
+  ### Actionable Intelligence
+  - **IMMEDIATE ACTIONS** (Time-bound, this week)
+  - **STRATEGIC PRIORITIES** (Impact-ranked, 30-90 days)
+  - **INTELLIGENCE GAPS** (Data needs identified)
+  - **RISK MONITORING** (Warning indicators to watch)
+
+  ### Performance Benchmarks
+  - Current vs target metrics
+  - Trend indicators
+  - Comparative analysis
+
+  ### Data Quality Notes
+  - Gaps identified in the original report
+  - Assumptions made during analysis
+  - Limitations or caveats
+
+  ## Quality Control Checklist
+
+  Before finalizing, verify:
+  - Would a fundraising professional understand these actions?
+  - Are the timeframes realistic given the current date?
+  - Do the priorities make business sense?
+  - Are the missing data gaps clearly identified?
+  - Are actions specific and immediately executable?
+  - Do timeframes align with business reality?
+  - Are critical risks prominently flagged?
+
+  ## Output Instructions
+
+  Save your complete analysis to: {{ output_file }}
+
+  Ensure the analysis is markdown formatted with proper headings, bullet points, and emphasis for key findings.
+
+# Initial prompt to start the agent's work
+prompt: |
+  Analyze the fundraising report following the comprehensive framework above.
+  Focus on extracting actionable insights with time-aware recommendations based on the current date and fiscal position.
+  Ensure all recommendations are specific, prioritized, and executable.
+
+# AI model settings for analysis tasks
+settings:
+  goose_provider: "anthropic"
+  goose_model: "claude-sonnet-4-20250514"
+  temperature: 0.5

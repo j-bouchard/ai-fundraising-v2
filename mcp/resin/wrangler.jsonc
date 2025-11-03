@@ -1,0 +1,11 @@
+{
+  "name": "resin",
+  "main": "./src/index.ts",
+  "compatibility_date": "2025-06-17",
+  // Environment variables - set these using: wrangler secret put <KEY>
+  // Or uncomment and add them here for development (not recommended for production)
+  // Required secrets: SF_CLIENT_ID, SF_CLIENT_SECRET, SF_REFRESH_TOKEN, SF_INSTANCE_URL, API_KEY
+  "vars": {
+    // "SF_DOMAIN": "login"
+  }
+}

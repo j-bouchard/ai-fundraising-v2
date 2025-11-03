@@ -1,0 +1,102 @@
+version: "1.0.0"
+title: "TODO: Document Analysis Recipe Title"
+description: "TODO: Description of what analysis this recipe performs"
+
+# Input parameters - typically file-based for analysis recipes
+parameters:
+  - key: input_file
+    input_type: file
+    requirement: required
+    description: "Path to the document/report file to analyze"
+
+  - key: output_file
+    input_type: string
+    requirement: optional
+    default: "analysis-output.md"
+    description: "Path where the analysis report should be saved"
+
+  - key: context_info
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Additional context or constraints for the analysis"
+
+# Analysis instructions and framework
+instructions: |
+  # Document Analysis Task
+
+  You are analyzing a document to extract insights and provide actionable recommendations.
+
+  ## Current Context
+  Today's date: [Will be filled at runtime]
+  Analysis scope: {{ context_info }}
+
+  ## Input Document
+  {{ input_file }}
+
+  ## Analysis Framework
+
+  ### 1. Context Validation
+  - Extract document metadata (date, period, scope)
+  - Validate data completeness
+  - Identify any gaps or inconsistencies
+
+  ### 2. Content Analysis
+  - Extract key metrics and findings
+  - Identify patterns and trends
+  - Calculate derived insights
+  - Flag anomalies or concerns
+
+  ### 3. Quality Assessment
+  - Validate data consistency
+  - Check for missing information
+  - Verify calculations and logic
+  - Assess reliability of conclusions
+
+  ### 4. Actionable Recommendations
+  - Generate specific, time-bound action items
+  - Prioritize by impact and urgency
+  - Include clear success metrics
+  - Identify required resources
+
+  ## Output Requirements
+
+  Create a comprehensive analysis report with the following structure:
+
+  ### Executive Summary
+  - 3-5 key findings (bullet points)
+  - Primary recommendations
+  - Critical alerts or risks
+
+  ### Detailed Analysis
+  [Sections specific to your analysis type]
+
+  ### Actionable Intelligence
+  - **IMMEDIATE ACTIONS** (This week)
+  - **SHORT-TERM PRIORITIES** (30 days)
+  - **STRATEGIC INITIATIVES** (90+ days)
+
+  ### Data Quality Notes
+  - Gaps identified
+  - Assumptions made
+  - Limitations of analysis
+
+  ### Appendix
+  - Supporting calculations
+  - Additional context
+  - Reference data
+
+  ## Output Instructions
+
+  Save your complete analysis to: {{ output_file }}
+
+# Initial prompt to start the agent's work
+prompt: |
+  Analyze the provided document following the analysis framework above.
+  Focus on extracting actionable insights and providing specific recommendations.
+
+# AI model settings for analysis tasks
+settings:
+  goose_provider: "anthropic"
+  goose_model: "claude-sonnet-4-20250514"
+  temperature: 0.5  # Lower for more consistent analysis

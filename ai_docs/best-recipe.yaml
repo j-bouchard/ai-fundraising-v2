@@ -1,0 +1,15 @@
+title: donation-analytics
+description: Plan your next trip
+
+# Recipe steps
+prompt: |
+  Using the fundraisingaimcp MCP server, please analyze our fundraising data, save the output to a markdown file.
+  1. First, get an overview of total donations by running a SOQL query to count all opportunities with Amount > 0    
+  2. Then analyze donation patterns by stage (Closed Won vs Closed Lost)
+  3. Identify our top 10 largest donations
+  Create a detailed report that includes:
+   - the list of total donations
+settings:
+  goose_provider: "anthropic"
+  goose_model: "claude-sonnet-4-20250514"
+  temperature: 0.8

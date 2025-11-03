@@ -1,0 +1,146 @@
+version: "1.0.0"
+title: "Advanced Recipe with Retry and Structured Output"
+description: "Example recipe demonstrating advanced features like retry logic, structured output, and subrecipes"
+
+instructions: |
+  This recipe demonstrates advanced features:
+  - Automated retry with success validation
+  - Structured JSON output
+  - Subrecipe composition
+  - File input parameters
+
+prompt: |
+  Analyze the provided file and generate a comprehensive report.
+  
+  File contents:
+  {{ source_file }}
+  
+  Additional context: {{ context }}
+
+parameters:
+  - key: source_file
+    input_type: file  # Reads file contents
+    requirement: required
+    description: "Path to the file to analyze"
+  
+  - key: context
+    input_type: string
+    requirement: optional
+    default: "No additional context provided"
+    description: "Additional context for the analysis"
+  
+  - key: output_format
+    input_type: string
+    requirement: user_prompt  # Will prompt user if not provided
+    description: "Desired output format (json/markdown)"
+
+# Model configuration
+settings:
+  goose_provider: "anthropic"
+  goose_model: "claude-sonnet-4-20250514"
+  temperature: 0.3  # Lower temperature for more consistent output
+
+# Extension configuration
+extensions:
+  - type: stdio
+    name: github-mcp
+    cmd: github-mcp-server
+    args: []
+    env_keys:
+      - GITHUB_PERSONAL_ACCESS_TOKEN  # Will prompt for this if not set
+    timeout: 60
+    description: "GitHub MCP extension for repository operations"
+
+# Subrecipes for modular tasks
+sub_recipes:
+  - name: "validation"
+    path: "./subrecipes/validate-input.yaml"
+    values:
+      validation_level: "strict"
+      log_errors: "true"
+  
+  - name: "processing"
+    path: "./subrecipes/process-data.yaml"
+    sequential_when_repeated: true  # Forces sequential execution
+
+# Automated retry configuration
+retry:
+  max_retries: 3
+  timeout_seconds: 30
+  on_failure_timeout_seconds: 60
+  checks:
+    # Check if output file was created
+    - type: shell
+      command: "test -f /tmp/analysis_output.json"
+    # Validate JSON structure
+    - type: shell
+      command: "jq . /tmp/analysis_output.json > /dev/null 2>&1"
+  on_failure: |
+    echo "Retry attempt failed. Cleaning up temporary files..."
+    rm -f /tmp/analysis_output.json
+    rm -f /tmp/*.tmp
+
+# Structured output validation
+response:
+  json_schema:
+    type: object
+    properties:
+      status:
+        type: string
+        enum: ["success", "partial", "failed"]
+        description: "Analysis status"
+      
+      summary:
+        type: string
+        description: "Executive summary of the analysis"
+      
+      findings:
+        type: array
+        items:
+          type: object
+          properties:
+            category:
+              type: string
+              description: "Finding category"
+            severity:
+              type: string
+              enum: ["high", "medium", "low"]
+              description: "Severity level"
+            description:
+              type: string
+              description: "Detailed description of the finding"
+          required:
+            - category
+            - severity
+            - description
+        description: "List of analysis findings"
+      
+      recommendations:
+        type: array
+        items:
+          type: string
+        description: "Actionable recommendations based on findings"
+      
+      metadata:
+        type: object
+        properties:
+          analyzed_at:
+            type: string
+            format: date-time
+            description: "Timestamp of analysis"
+          file_path:
+            type: string
+            description: "Path to analyzed file"
+          parameters_used:
+            type: object
+            description: "Parameters used for this analysis"
+        required:
+          - analyzed_at
+          - file_path
+    
+    required:
+      - status
+      - summary
+      - findings
+      - recommendations
+      - metadata

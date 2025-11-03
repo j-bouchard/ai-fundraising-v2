@@ -1,0 +1,46 @@
+version: "1.0.0"
+title: "TODO: Add Recipe Title"
+description: "TODO: Add detailed description of what this recipe accomplishes"
+
+# Optional: Instructions that guide the agent's approach
+instructions: |
+  Follow these steps to complete the task:
+  1. TODO: Add step 1
+  2. TODO: Add step 2
+  3. TODO: Add step 3
+
+# Optional: Initial prompt sent to the agent
+prompt: |
+  TODO: Add the initial prompt that starts the agent's work
+  You can use parameter substitutions like {{ parameter_name }}
+
+# Optional: Define parameters for customization
+parameters:
+  - key: example_param
+    input_type: string
+    requirement: required
+    description: "TODO: Describe what this parameter is for"
+  
+  - key: optional_param
+    input_type: string
+    requirement: optional
+    default: "default_value"
+    description: "TODO: Describe optional parameter"
+
+# Optional: Configure AI model settings
+settings:
+  goose_provider: "anthropic"
+  goose_model: "claude-sonnet-4-20250514"
+  temperature: 0.7
+
+# Optional: Add MCP server extensions if needed
+extensions:
+  # Example: Code search extension
+  # - type: stdio
+  #   name: codesearch
+  #   cmd: uvx
+  #   args:
+  #     - mcp_codesearch@latest
+  #   timeout: 300
+  #   bundled: true
+  #   description: "Query codesearch directly from goose"

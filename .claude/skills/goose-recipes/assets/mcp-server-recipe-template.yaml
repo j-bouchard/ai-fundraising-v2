@@ -1,0 +1,96 @@
+version: "1.0.0"
+title: "MCP Server Recipe Template"
+description: "Template for recipes that use HTTP-based MCP servers with authentication"
+
+parameters:
+  # MCP Server authentication
+  - key: API_KEY
+    input_type: string
+    requirement: optional
+    description: "API key for MCP server authentication"
+    default: "your-api-key-here"
+
+  # Task-specific parameters
+  - key: task_input
+    input_type: string
+    requirement: required
+    description: "Main input for the task"
+
+  - key: output_file
+    input_type: string
+    requirement: optional
+    description: "Path where results should be saved"
+    default: "./output.md"
+
+instructions: |
+  **MCP Server Access**
+  The MCP server is available at: https://your-mcp-server.example.com/mcp
+  Authentication: Use Bearer token with API key: {{ API_KEY }}
+
+  The server provides the following tools:
+  - tool_name_1: Description of what this tool does
+  - tool_name_2: Description of what this tool does
+  - tool_name_3: Description of what this tool does
+
+  You can access these tools by making HTTP requests with the Authorization header:
+  Authorization: Bearer {{ API_KEY }}
+
+  Follow these steps:
+
+  1. **Step 1**: First task description
+     - Use tool_name_1 to accomplish this
+     - Process the results
+
+  2. **Step 2**: Second task description
+     - Use tool_name_2 for this step
+     - Analyze the data
+
+  3. **Step 3**: Generate output
+     - Compile all findings
+     - Create a comprehensive report
+     - Save to {{ output_file }}
+
+prompt: |
+  Perform the task using {{ task_input }} with the MCP server tools.
+
+  Generate a detailed report and save it to {{ output_file }}.
+
+response:
+  json_schema:
+    type: object
+    properties:
+      output_path:
+        type: string
+        description: "Path to the generated output file"
+      summary:
+        type: object
+        properties:
+          key_metric_1:
+            type: string
+            description: "Description of first metric"
+          key_metric_2:
+            type: string
+            description: "Description of second metric"
+          findings:
+            type: array
+            items:
+              type: string
+            description: "List of key findings"
+          recommendations:
+            type: array
+            items:
+              type: string
+            description: "Actionable recommendations"
+        required: [key_metric_1, key_metric_2, findings, recommendations]
+      status:
+        type: string
+        enum: [completed, partial, failed]
+        description: "Task completion status"
+    required: [output_path, summary, status]
+
+retry:
+  max_retries: 2
+  checks:
+    - type: shell
+      command: "test -f {{ output_file }}"
+  on_failure: "rm -f {{ output_file }}"
