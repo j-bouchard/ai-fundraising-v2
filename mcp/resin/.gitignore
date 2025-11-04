@@ -4,3 +4,8 @@ node_modules
 .wrangler
 *.tsbuildinfo
 dist
+
+# Secret files (environment-specific credentials)
+.secrets.*
+.env
+.env.*

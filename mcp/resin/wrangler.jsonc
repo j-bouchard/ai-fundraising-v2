@@ -13,5 +13,20 @@
       "binding": "ANALYTICS",
       "dataset": "resin_metrics"
     }
-  ]
+  ],
+  // Multi-client deployments - each environment gets isolated worker with own secrets
+  "env": {
+    "evergreen": {
+      "name": "evergreen",
+      "analytics_engine_datasets": [
+        {
+          "binding": "ANALYTICS",
+          "dataset": "evergreen_metrics"
+        }
+      ],
+      "vars": {
+        // "SF_DOMAIN": "login"
+      }
+    }
+  }
 }
