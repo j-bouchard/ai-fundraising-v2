@@ -2,9 +2,14 @@
 
 **Resin** is a Cloudflare Workers-based MCP (Model Context Protocol) server for Salesforce fundraising analytics. It provides AI assistants with tools to query donor data, segment audiences, and perform fundraising analytics through natural language interactions.
 
-**Production deployment:** https://resin.mpazbot.workers.dev
+**Multi-Client Deployment Model:** One codebase deploys to multiple isolated Cloudflare Workers, one per client. Each worker has its own Salesforce credentials, API keys, and metrics collection.
 
-**Authentication:** All requests require `Authorization: Bearer <api-key>` header
+**Deployments:**
+- Default (demo): https://resin.mpazbot.workers.dev
+- Evergreen: https://evergreen.mpazbot.workers.dev
+- (Additional clients added via wrangler.jsonc environments)
+
+**Authentication:** All requests require `Authorization: Bearer <api-key>` header (unique per client)
 
 ## Essential Commands
 
@@ -47,17 +52,34 @@ npm test -- -t "should create a test Contact"
 
 ### Deployment
 
+**Multi-Client Architecture:** This codebase deploys multiple isolated Cloudflare Workers, one per client. Each environment has its own worker name, secrets, and metrics collection.
+
+**Environment structure:**
+- **Default (no --env flag):** Top-level wrangler.jsonc config → worker name "resin"
+- **Named environments (--env flag):** env.{name} sections → worker name = environment name
+
 ```bash
 cd mcp/resin
 
-# Deploy to Cloudflare Workers
+# Deploy DEFAULT worker (uses top-level config → resin.mpazbot.workers.dev)
 npm run deploy
+# or: wrangler deploy
 
-# Delete deployment and all resources
+# Deploy NAMED ENVIRONMENT worker (uses env.evergreen → evergreen.mpazbot.workers.dev)
+wrangler deploy --env evergreen
+
+# Delete DEFAULT worker
 npm run delete
+# or: wrangler delete
 
-# View live logs from deployed worker
+# Delete NAMED ENVIRONMENT worker
+wrangler delete --env evergreen
+
+# View logs from DEFAULT worker (no --env flag)
 npx wrangler tail
+
+# View logs from NAMED ENVIRONMENT worker
+npx wrangler tail --env evergreen
 
 # Pretty formatted logs
 npx wrangler tail --format pretty
@@ -65,32 +87,115 @@ npx wrangler tail --format pretty
 # Filter by status
 npx wrangler tail --status error
 
-# List Cloudflare secrets
+# List secrets for DEFAULT worker (no --env flag)
 npx wrangler secret list
+
+# List secrets for NAMED ENVIRONMENT worker
+npx wrangler secret list --env evergreen
 ```
 
+**Adding a New Client:**
+
+1. Add environment to `wrangler.jsonc`:
+```json
+"env": {
+  "newclient": {
+    "name": "newclient",
+    "analytics_engine_datasets": [
+      {
+        "binding": "ANALYTICS",
+        "dataset": "newclient_metrics"
+      }
+    ],
+    "vars": {}
+  }
+}
+```
+
+2. Create secrets file and deploy:
+```bash
+# Create secret file from template
+cp .secrets.template .secrets.newclient
+
+# Edit .secrets.newclient with actual credentials
+nano .secrets.newclient
+
+# Deploy worker
+wrangler deploy --env newclient
+
+# Set secrets from file
+./set-secrets.sh newclient
+```
+
+3. Worker URL will be: `https://newclient.mpazbot.workers.dev`
+
 ### Secrets Management
+
+**Important:** Each environment has completely isolated secrets. You must set secrets separately for each client worker.
+
+**Recommended: Use environment-specific secret files**
+
+Create `.secrets.{environment}` files for each worker:
 
 ```bash
 cd mcp/resin
 
-# Set API key for authentication (required)
-echo "your-secure-api-key-here" | npx wrangler secret put API_KEY
+# Create .secrets.resin for default worker
+cat > .secrets.resin << EOF
+API_KEY=your-resin-api-key
+SF_CLIENT_ID=your-client-id
+SF_CLIENT_SECRET=your-client-secret
+SF_REFRESH_TOKEN=your-refresh-token
+SF_INSTANCE_URL=https://yourorg.my.salesforce.com
+SF_DOMAIN=login
+EOF
 
-# Set all Salesforce secrets from .env (one-time setup)
+# Create .secrets.evergreen for evergreen worker
+cat > .secrets.evergreen << EOF
+API_KEY=your-evergreen-api-key
+SF_CLIENT_ID=evergreen-client-id
+SF_CLIENT_SECRET=evergreen-client-secret
+SF_REFRESH_TOKEN=evergreen-refresh-token
+SF_INSTANCE_URL=https://evergreen.my.salesforce.com
+SF_DOMAIN=login
+EOF
+
+# Set secrets for default worker (reads from .secrets.resin)
 ./set-secrets.sh
 
-# Set individual secret manually
+# Set secrets for evergreen worker (reads from .secrets.evergreen)
+./set-secrets.sh evergreen
+
+# List secrets to verify
+npx wrangler secret list                # Default worker
+npx wrangler secret list --env evergreen  # Evergreen worker
+```
+
+**Alternative: Set secrets manually**
+
+```bash
+# Set individual secrets for DEFAULT worker (no --env flag)
 echo "value" | npx wrangler secret put SECRET_NAME
 
-# List all configured secrets
-npx wrangler secret list
+# Set individual secrets for NAMED ENVIRONMENT worker
+echo "value" | npx wrangler secret put SECRET_NAME --env evergreen
+
+# Delete secret
+npx wrangler secret delete SECRET_NAME --env evergreen
 ```
 
 **Note:** All requests to the MCP server must include an Authorization header:
 ```
 Authorization: Bearer your-secure-api-key-here
 ```
+
+**Required secrets for each worker:**
+- `API_KEY` - Bearer token for MCP server authentication
+- `SF_CLIENT_ID` - Salesforce Connected App client ID
+- `SF_CLIENT_SECRET` - Salesforce Connected App client secret
+- `SF_REFRESH_TOKEN` - Salesforce OAuth refresh token
+- `SF_INSTANCE_URL` - Salesforce instance URL (e.g., https://example.my.salesforce.com)
+- `SF_DOMAIN` - Salesforce domain (login, test, or custom domain)
 
 ## Architecture
 

@@ -10,9 +10,14 @@ This is a **monorepo** containing multiple projects related to AI-powered fundra
 
 1. **Resin** (`mcp/resin/`) - Cloudflare Workers-based MCP server for Salesforce fundraising analytics
    - **See [mcp/resin/CLAUDE.md](mcp/resin/CLAUDE.md) for complete Resin documentation**
-   - Production: https://resin.mpazbot.workers.dev
-   - **Authentication required:** All requests must include `Authorization: Bearer <api-key>` header
-   - Features: Health checks, structured logging, metrics collection
+   - **Multi-client deployment:** One codebase, multiple isolated workers (one per client)
+   - **Architecture:** Uses wrangler.jsonc environments for per-client deployments
+   - **Deployments:**
+     - Demo: https://resin.mpazbot.workers.dev
+     - Evergreen: https://evergreen.mpazbot.workers.dev
+   - **Authentication required:** Each worker has unique API key and Salesforce credentials
+   - **Isolation:** Complete separation of secrets, metrics, and data per client
+   - Features: Health checks, structured logging, per-client metrics collection
 
 2. **Mill** (`mill/`) - Fundraising AI workflow specifications and Goose recipes
    - **See [mill/CLAUDE.md](mill/CLAUDE.md) for complete Mill documentation**
@@ -130,9 +135,14 @@ R2:     s3://resin-reports/fundraising-data-analysis/2024-10-30-1400/report.md
 
 The `goose-recipes` skill uses this critical pattern for authenticated MCP servers:
 
-**✅ CORRECT - Pass credentials as parameters:**
+**✅ CORRECT - Pass server URL and credentials as parameters:**
 ```yaml
 parameters:
+  - key: MCP_SERVER_URL
+    input_type: string
+    requirement: optional
+    description: "MCP server URL for specific client"
+    default: "https://resin.mpazbot.workers.dev"
   - key: API_KEY
     input_type: string
     requirement: optional
@@ -141,9 +151,20 @@ parameters:
 
 instructions: |
   **MCP Server Access**
-  Server: https://server.example.com/mcp
+  Server: {{ MCP_SERVER_URL }}/mcp
   Auth: Bearer {{ API_KEY }}
   Tools: tool1, tool2, tool3
+```
+
+**Running recipes for different clients:**
+```bash
+# Default client (resin)
+./scripts/mill/run-recipe.sh
+
+# Evergreen client
+./scripts/mill/run-recipe.sh \
+  --params MCP_SERVER_URL="https://evergreen.mpazbot.workers.dev" \
+  --params API_KEY="evergreen-api-key"
 ```
 
 **❌ INCORRECT - Extension with headers (doesn't work):**
@@ -153,6 +174,13 @@ extensions:
     headers:
       Authorization: "Bearer {{ API_KEY }}"  # This will fail
 ```
+
+**Multi-Client Deployment Model:**
+- Each client gets an isolated Cloudflare Worker deployment
+- Worker environments configured in `mcp/resin/wrangler.jsonc`
+- Each environment has unique secrets (API keys, Salesforce credentials)
+- Recipes parameterize the server URL and API key for client-specific access
+- Complete isolation ensures client data never mixes
 
 ### Working with This Monorepo
 
