@@ -10,6 +10,11 @@
 
 Your donor data security is our top priority. This document explains how we protect your Salesforce data when using AI-powered fundraising insights.
 
+**Platform Compatibility:**
+- ✅ Salesforce NPSP (Nonprofit Success Pack)
+- ✅ Salesforce Nonprofit Cloud
+- ✅ Works with both platforms seamlessly
+
 **Key Principles:**
 - ✅ Your data stays in your control
 - ✅ Industry-standard encryption and authentication
@@ -24,13 +29,15 @@ Your donor data security is our top priority. This document explains how we prot
 ```
 Your Salesforce → Secure API → Our MCP Server → AI Processing → Results to You
      (OAuth)      (Encrypted)    (Cloudflare)     (Anthropic)    (Your Device)
+  (NPSP or NC)                  (Auto-detects)
 ```
 
 ### What This Means:
 1. **Salesforce Connection:** We use OAuth 2.0 (the same secure method used by trusted apps like Gmail mobile)
-2. **Data Transmission:** All data is encrypted in transit using TLS 1.2+
-3. **Processing:** Data is temporarily processed to generate insights, then discarded
-4. **Storage:** We don't store your donor data—only connection credentials (encrypted)
+2. **Platform Detection:** Our system automatically detects whether you're using NPSP or Nonprofit Cloud and adapts accordingly
+3. **Data Transmission:** All data is encrypted in transit using TLS 1.2+
+4. **Processing:** Data is temporarily processed to generate insights, then discarded
+5. **Storage:** We don't store your donor data—only connection credentials (encrypted)
 
 ---
 
@@ -56,6 +63,33 @@ Your Salesforce → Secure API → Our MCP Server → AI Processing → Results 
 - Donor names and giving history (for prioritization)
 - Opportunity and engagement data (for recommendations)
 - Campaign and program information (for context)
+- Contact and Account information
+- Tasks and activities (for relationship tracking)
+
+**Standard Objects We Access (NPSP & Nonprofit Cloud):**
+- **Contacts** - Donor information, relationships, engagement history
+- **Accounts** - Organizational donors, household accounts
+- **Opportunities** - Gifts, pledges, grant opportunities
+- **Campaigns & Campaign Members** - Campaign tracking and participation
+- **Tasks & Activities** - Follow-ups, touches, stewardship actions
+- **Notes & Attachments** - Context for donor relationships (when relevant)
+
+**NPSP-Specific Objects:**
+- **Relationships** - Constituent relationships (NPSP)
+- **Affiliations** - Organizational connections (NPSP)
+- **General Accounting Units (GAUs)** - Fund designation tracking (NPSP)
+- **Engagement Plans** - Donor cultivation workflows (NPSP)
+
+**Nonprofit Cloud-Specific Objects:**
+- **Gift Transactions** - Individual gift records and payment processing
+- **Gift Commitments** - Pledges, recurring gifts, and future commitments
+- **Giving Commitments** - Multi-year pledges and commitment schedules
+- **Designations** - Fund allocations and restricted giving
+- **Funds** - Restricted and designated fund tracking
+- **Deliverables** - Program outcomes and impact tracking
+- **Indicators** - Success metrics and KPIs
+- **Program Engagements** - Participant tracking and service delivery
+- **Disbursements** - Grant and scholarship distributions
 
 **We DON'T Send:**
 - Social Security Numbers
@@ -191,7 +225,7 @@ Your Salesforce → Secure API → Our MCP Server → AI Processing → Results 
 
 ### Standard Access (Default Configuration)
 
-Our platform is designed for comprehensive fundraising operations and by default can access:
+Our platform is designed for comprehensive fundraising operations and works with both **NPSP (Nonprofit Success Pack)** and **Nonprofit Cloud**. By default we can access:
 
 **Read & Write:**
 - **Contacts & Accounts:** Donor information, relationships, and engagement
@@ -199,12 +233,31 @@ Our platform is designed for comprehensive fundraising operations and by default
 - **Campaigns & Campaign Members:** Campaign tracking and donor participation
 - **Tasks & Activities:** Follow-ups, stewardship touches, and donor interactions
 
+**NPSP-Specific (when applicable):**
+- **Relationships & Affiliations:** Constituent and organizational connections
+- **General Accounting Units (GAUs):** Fund designation and allocation
+- **Engagement Plans:** Cultivation and stewardship workflows
+- **Household Accounts:** NPSP household model
+
+**Nonprofit Cloud-Specific (when applicable):**
+- **Gift Transactions:** Individual gift records and payment processing
+- **Gift Commitments:** Pledges, recurring gifts, and payment schedules
+- **Giving Commitments:** Multi-year pledges and commitment tracking
+- **Designations:** Fund allocations and restricted giving
+- **Funds:** Restricted and designated fund tracking
+- **Deliverables & Indicators:** Program outcomes and impact metrics
+- **Program Engagements:** Participant tracking and service delivery
+- **Disbursements:** Grant and scholarship distributions
+- **Awards:** Recognition and donor acknowledgments
+
 **What This Enables:**
-- Donor prioritization and segmentation
-- Gift tracking and analysis
-- Automated task creation for follow-ups
-- Email drafting with donor context
-- Conversational data entry
+- Donor prioritization and segmentation (both platforms)
+- Gift tracking and analysis (both platforms)
+- Automated task creation for follow-ups (both platforms)
+- Email drafting with donor context (both platforms)
+- Conversational data entry (both platforms)
+- NPSP-specific cultivation workflows
+- Nonprofit Cloud program impact tracking
 
 ### Objects We Never Access
 
