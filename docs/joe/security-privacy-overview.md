@@ -358,7 +358,7 @@ Our platform is designed for comprehensive fundraising operations and works with
 
 ## Testing & Demos
 
-### For Demonstrations (like Dreamforce):
+### For Demonstrations:
 - We use completely synthetic data (fake donors, fake organizations)
 - No real donor information is used in public demos
 - Test environments are separate from production
