@@ -148,3 +148,4 @@ reports/*
 
 # Keep sample reports (for documentation)
 # These are in reports-sample/ and should be committed
+*.pyc
