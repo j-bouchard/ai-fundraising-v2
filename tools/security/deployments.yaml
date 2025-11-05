@@ -1,0 +1,28 @@
+# Cloudflare Workers Deployments Configuration
+# Each deployment has its own worker instance with isolated credentials
+# API keys referenced from environment variables for security
+
+deployments:
+  resin:
+    name: "Resin (Default)"
+    url: "https://resin.mpazbot.workers.dev"
+    api_key_env: "RESIN_API_KEY"
+    description: "Default demo deployment"
+
+  evergreen:
+    name: "Evergreen"
+    url: "https://evergreen.mpazbot.workers.dev"
+    api_key_env: "EVERGREEN_API_KEY"
+    description: "Evergreen client deployment"
+
+# To add a new client deployment:
+# 1. Add a new entry below with unique name
+# 2. Set the worker URL
+# 3. Set the API_KEY environment variable name
+# 4. Example new client:
+#
+#   newclient:
+#     name: "New Client"
+#     url: "https://newclient.mpazbot.workers.dev"
+#     api_key_env: "NEWCLIENT_API_KEY"
+#     description: "New client deployment"
