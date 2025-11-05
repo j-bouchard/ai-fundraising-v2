@@ -1,0 +1,29 @@
+# Python virtual environment
+.venv
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Lock files (managed by uv)
+# uv.lock is NOT ignored - we want to commit it for reproducibility
+
+# Reports
+reports/

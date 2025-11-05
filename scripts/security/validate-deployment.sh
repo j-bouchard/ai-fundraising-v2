@@ -63,14 +63,15 @@ fi
 
 # Sync Python environment
 echo -e "${BLUE}Installing Python dependencies...${NC}"
-uv sync --quiet
+cd "$REPO_ROOT/tools/security" && uv sync --quiet --extra test
+cd "$REPO_ROOT"
 
 # Run validator
 echo ""
 echo -e "${BLUE}Running validator for worker: $WORKER${NC}"
 echo ""
 
-uv run python tools/security/validator.py --worker "$WORKER"
+cd "$REPO_ROOT/tools/security" && uv run python validator.py --worker "$WORKER"
 
 echo ""
 echo -e "${GREEN}✓ Validation complete${NC}"
