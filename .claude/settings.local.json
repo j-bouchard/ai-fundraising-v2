@@ -9,7 +9,11 @@
       "WebSearch",
       "Skill(internal-comms)",
       "Bash(chmod:*)",
-      "Bash(uv run python:*)"
+      "Bash(uv run python:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "mcp__linear__create_issue",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
