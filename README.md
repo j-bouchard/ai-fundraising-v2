@@ -37,4 +37,5 @@ Each project has its own setup and documentation. Navigate to the project direct
 
 ```bash
 claude --mcp-config .mcp.json.context7
+claude --mcp-config .mcp.json.linear
 ```
