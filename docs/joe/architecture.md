@@ -66,15 +66,16 @@ The system delivers insights through Slack (Priority #5, MVP by Dec 15), automat
 │  • Report scheduling (Cron triggers)                  │
 └────────────────────┬─────────────────────────────────┘
                      │
-        ┌────────────┼────────────┬─────────────┐
-        ▼            ▼            ▼             ▼
-┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐
-│Knowledge  │ │    Org    │ │Salesforce │ │Discovery  │
-│   Base    │ │  Context  │ │    MCP    │ │   Agent   │
-│  Service  │ │  Service  │ │  Server   │ │  Service  │
-└───────────┘ └───────────┘ └───────────┘ └───────────┘
-        │            │            │             │
-        ▼            ▼            ▼             ▼
+    ┌────────┬───────┼───────┬────────┬────────────┐
+    ▼        ▼       ▼       ▼        ▼            ▼
+┌────────┐┌──────┐┌──────┐┌────────┐┌────────┐┌──────────┐
+│Knowledge││ Org  ││Sales-││Discovery││Fund-   ││Semantic  │
+│  Base  ││Context││force ││ Agent  ││raising ││  Layer   │
+│ Service││Service││ MCP  ││Service ││Analysis││ Service  │
+│        ││       ││Server││        ││ Worker ││          │
+└────────┘└──────┘└──────┘└────────┘└────────┘└──────────┘
+    │        │       │       │         │           │
+    ▼        ▼       ▼       ▼         ▼           ▼
 ┌──────────────────────────────────────────────────────┐
 │                  STORAGE LAYER                        │
 ├──────────────────────────────────────────────────────┤
