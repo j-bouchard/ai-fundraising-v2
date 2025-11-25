@@ -1,8 +1,10 @@
 # Resin AI - Complete System Architecture
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** November 25, 2025  
-**Purpose:** Technical architecture for AI-powered Salesforce fundraising assistant
+**Purpose:** Technical architecture for AI-powered Salesforce fundraising assistant  
+**Target Launch:** January 1, 2025 (5 weeks)  
+**Status:** Critical Path - Intelligence Layer is Priority #1
 
 ---
 
@@ -20,14 +22,24 @@
 
 ## System Overview
 
-Resin AI is an intelligent fundraising assistant that helps nonprofits manage donor relationships without logging into Salesforce. It combines:
+Resin AI is an intelligent fundraising assistant that helps nonprofits manage donor relationships without logging into Salesforce. The core differentiator is the **Intelligence Layer** - deep fundraising expertise combined with org-specific context that provides unique value beyond a simple MCP connection.
 
-- **Universal fundraising expertise** (best practices knowledge base)
-- **Organization-specific context** (discovered through automated + conversational discovery)
-- **Custom documents** (strategic plans, programs, campaign materials)
-- **Real-time Salesforce data** (via MCP server integration)
+**Core Components:**
+- **Universal fundraising expertise** (50+ best practices documents) - Priority #1
+- **Organization-specific context** (Discovery Agent) - Priority #2  
+- **Semantic layer** (business rules and routing) - Priority #3
+- **Custom documents** (strategic plans, programs) - Priority #4
+- **Real-time Salesforce data** (via MCP server)
+- **Consistency engine** (same query = same answer for 5 hours)
 
-The system delivers insights through Slack (primary), reports, and eventually a web interface.
+The system delivers insights through Slack (Priority #5, MVP by Dec 15), automated reports (Priority #7, Jan 1), and eventually a web interface (Phase 3, Q2 2025).
+
+**Critical Success Factors:**
+1. Intelligence Layer Depth - Must be exceptional
+2. January 1 Launch - Must deliver immediate value to 5 consulting clients
+3. Consistency - Builds trust through deterministic responses
+4. Time Savings - Keep users out of Salesforce 80% of time
+5. Mission Focus - Give time back for impact work
 
 ---
 
@@ -51,6 +63,7 @@ The system delivers insights through Slack (primary), reports, and eventually a 
 │  • Intent detection                                   │
 │  • Session management                                 │
 │  • Response orchestration                             │
+│  • Report scheduling (Cron triggers)                  │
 └────────────────────┬─────────────────────────────────┘
                      │
         ┌────────────┼────────────┬─────────────┐
@@ -77,6 +90,9 @@ The system delivers insights through Slack (primary), reports, and eventually a 
 │  • Embeddings index (semantic search)                │
 │  • Org credentials (encrypted)                       │
 └──────────────────────────────────────────────────────┘
+
+Note: Pure Cloudflare architecture - no external dependencies
+All services are Cloudflare Workers
 ```
 
 ---
@@ -206,6 +222,243 @@ function detectIntent(text: string): Intent {
   }
   
   return Intent.GENERAL_QUESTION;
+}
+```
+
+---
+
+## Semantic Layer (Priority #3)
+
+### Overview
+
+The semantic layer ensures consistent, reliable recommendations by encoding business logic and org-specific rules:
+
+```
+┌─────────────────────────────────────────────────────┐
+│              SEMANTIC LAYER                          │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  Donor Routing Rules:                               │
+│  • Who handles which donors (by geography, tier)    │
+│  • Portfolio assignments and capacity               │
+│  • Escalation paths for major gifts                 │
+│                                                      │
+│  Business Logic:                                    │
+│  • Prioritization algorithms                        │
+│  • Touch frequency by donor tier                    │
+│  • Solicitation approval thresholds                 │
+│  • Stewardship requirements                         │
+│                                                      │
+│  Data Guardrails:                                   │
+│  • Query limits and timeouts                        │
+│  • Result size constraints                          │
+│  • Privacy filters                                  │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+### Implementation
+
+```typescript
+// src/services/semantic-layer.ts
+export class SemanticLayer {
+  constructor(
+    private orgContext: OrgContextService,
+    private cache: CacheService
+  ) {}
+  
+  async applyBusinessRules(query: Query, results: any[]): Promise<any[]> {
+    const rules = await this.orgContext.getBusinessRules(query.orgId);
+    
+    // Apply donor routing
+    if (query.type === 'donor_prioritization') {
+      results = this.applyDonorRouting(results, rules.routing);
+    }
+    
+    // Apply tier-based logic
+    results = this.applyTierLogic(results, rules.donorTiers);
+    
+    // Apply privacy filters
+    results = this.applyPrivacyFilters(results, rules.privacy);
+    
+    return results;
+  }
+  
+  async applyDonorRouting(donors: any[], routing: RoutingRules) {
+    return donors.map(donor => ({
+      ...donor,
+      assignedTo: this.determineOwner(donor, routing),
+      priority: this.calculatePriority(donor, routing),
+      nextAction: this.suggestNextAction(donor, routing)
+    }));
+  }
+}
+```
+
+---
+
+## Consistency Engine
+
+### Overview
+
+The consistency engine ensures the same query returns the same answer within defined time windows, building user trust:
+
+```
+┌─────────────────────────────────────────────────────┐
+│            CONSISTENCY ENGINE                        │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  Cache Strategy:                                    │
+│  • Complex queries: 5-hour cache                    │
+│  • Simple lookups: 1-hour cache                     │
+│  • Reports: 24-hour cache                           │
+│                                                      │
+│  Cache Key Generation:                              │
+│  • Hash(query + org context + timestamp window)     │
+│  • Ensures identical queries get same result        │
+│                                                      │
+│  Invalidation Triggers:                             │
+│  • Manual refresh command                           │
+│  • Significant data changes                         │
+│  • Time-based expiration                            │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+### Implementation
+
+```typescript
+// src/services/consistency-engine.ts
+export class ConsistencyEngine {
+  constructor(private kv: KVNamespace) {}
+  
+  async getCachedResponse(query: string, orgId: string): Promise<CachedResponse | null> {
+    const cacheKey = this.generateCacheKey(query, orgId);
+    const cached = await this.kv.get(cacheKey, 'json');
+    
+    if (cached && !this.isExpired(cached)) {
+      return cached;
+    }
+    
+    return null;
+  }
+  
+  generateCacheKey(query: string, orgId: string): string {
+    const normalizedQuery = this.normalizeQuery(query);
+    const timeWindow = this.getTimeWindow(); // 5-hour windows
+    
+    return crypto.createHash('sha256')
+      .update(`${orgId}:${normalizedQuery}:${timeWindow}`)
+      .digest('hex');
+  }
+  
+  async cacheResponse(query: string, orgId: string, response: any, ttl: number) {
+    const cacheKey = this.generateCacheKey(query, orgId);
+    
+    await this.kv.put(cacheKey, JSON.stringify({
+      response,
+      cachedAt: Date.now(),
+      expiresAt: Date.now() + ttl,
+      query,
+      orgId
+    }), {
+      expirationTtl: ttl
+    });
+  }
+  
+  getTTL(queryType: string): number {
+    const ttlMap = {
+      'complex_analysis': 18000,  // 5 hours
+      'simple_lookup': 3600,       // 1 hour
+      'report': 86400,             // 24 hours
+      'real_time': 0                // No cache
+    };
+    
+    return ttlMap[queryType] || 3600;
+  }
+}
+```
+
+---
+
+## Conversation & Confirmation Layer (Priority #6)
+
+### Overview
+
+For all create/update operations, the system ensures safe data modifications through explicit confirmation:
+
+```
+┌─────────────────────────────────────────────────────┐
+│       CONVERSATION & CONFIRMATION LAYER              │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  Two-Way Confirmation Process:                      │
+│  1. Parse user intent                               │
+│  2. Show exactly what will be changed               │
+│  3. List any missing required fields                │
+│  4. Get explicit confirmation                       │
+│  5. Execute and show result                         │
+│                                                      │
+│  Example Flow:                                      │
+│  User: "I met with Sarah about STEM scholarships"   │
+│  Bot: Shows task preview with all fields           │
+│  Bot: Asks for missing required fields             │
+│  User: Confirms or modifies                         │
+│  Bot: Executes and shows Salesforce link           │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+### Implementation
+
+```typescript
+// src/services/confirmation-layer.ts
+export class ConfirmationLayer {
+  async handleCreateUpdate(intent: Intent, context: Context): Promise<Response> {
+    // 1. Parse intent to structured data
+    const parsed = await this.parseIntent(intent);
+    
+    // 2. Check for required fields
+    const missing = await this.checkRequiredFields(parsed, context.orgId);
+    
+    if (missing.length > 0) {
+      return this.requestMissingFields(parsed, missing);
+    }
+    
+    // 3. Show preview
+    const preview = this.generatePreview(parsed);
+    
+    // 4. Request confirmation
+    return {
+      text: preview,
+      requiresConfirmation: true,
+      actionData: parsed
+    };
+  }
+  
+  generatePreview(data: any): string {
+    return `I'll create a task with:
+    • Contact: ${data.contactName}
+    • Subject: ${data.subject}
+    • Due: ${data.dueDate}
+    • Description: ${data.description}
+    
+    Required: Should this be high priority? Who should be assigned?`;
+  }
+  
+  async executeAfterConfirmation(actionData: any, updates: any) {
+    // Merge user updates
+    const final = { ...actionData, ...updates };
+    
+    // Execute via MCP
+    const result = await this.mcp.createRecord(final);
+    
+    return {
+      text: `✅ Task created: ${result.url}`,
+      success: true,
+      recordId: result.id
+    };
+  }
 }
 ```
 
@@ -781,9 +1034,9 @@ The Fundraising Data Analysis provides comprehensive performance reports on a sc
 │                                                      │
 │  Execution Flow:                                     │
 │  1. Trigger → Cloudflare Worker                     │
-│  2. Worker → Goose Recipe Execution                 │
-│  3. Goose → MCP Server (Salesforce queries)         │
-│  4. Generate comprehensive report                    │
+│  2. Worker queries Salesforce via MCP               │
+│  3. Worker fetches org context & knowledge          │
+│  4. Generate analysis with Claude API               │
 │  5. Store in R2 + Send notifications                 │
 │                                                      │
 │  Delivery Methods:                                   │
@@ -811,54 +1064,92 @@ export class ReportScheduler {
   }
   
   async executeReport(orgId: string, frequency: 'monthly' | 'quarterly') {
-    // 1. Get org context
-    const context = await this.getOrgContext(orgId);
+    // 1. Get org context and knowledge base
+    const [orgContext, knowledgeBase, previousReport] = await Promise.all([
+      this.getOrgContext(orgId),
+      this.searchKnowledgeBase('fundraising metrics analysis'),
+      this.getPreviousReport(orgId)
+    ]);
     
-    // 2. Prepare Goose recipe parameters
-    const params = {
-      orgId,
-      reportPeriod: this.getReportPeriod(frequency),
-      includeContext: true,
-      outputFormat: 'markdown'
-    };
+    // 2. Query Salesforce for current metrics
+    const metrics = await this.querySalesforceMetrics(orgId);
     
-    // 3. Execute Goose recipe via HTTP
-    const report = await this.executeGooseRecipe(
-      'fundraising-data-analysis',
-      params,
-      context
-    );
+    // 3. Generate analysis with Claude
+    const report = await this.generateAnalysis({
+      metrics,
+      orgContext,
+      knowledgeBase,
+      previousReport,
+      period: frequency
+    });
     
     // 4. Store in R2
     const reportPath = await this.storeReport(orgId, report);
     
-    // 5. Generate follow-up analysis
-    const analysis = await this.executeGooseRecipe(
-      'fundraising-data-analysis-followup',
-      { inputFile: reportPath }
-    );
+    // 5. Generate follow-up recommendations
+    const recommendations = await this.generateRecommendations(report, orgContext);
     
-    // 6. Store analysis
-    const analysisPath = await this.storeReport(orgId, analysis, '-analysis');
+    // 6. Store recommendations
+    const recsPath = await this.storeReport(orgId, recommendations, '-recommendations');
     
     // 7. Deliver to users
-    await this.deliverReport(orgId, reportPath, analysisPath);
+    await this.deliverReport(orgId, reportPath, recsPath);
   }
   
-  async executeGooseRecipe(recipeName: string, params: any, context?: any) {
-    // Call Goose via subprocess or HTTP API
-    const command = `goose run --recipe mill/recipes/${recipeName}.yaml`;
+  async querySalesforceMetrics(orgId: string) {
+    const mcp = new MCPClient(orgId);
     
-    // Add parameters
-    const fullParams = {
-      ...params,
-      apiKey: await this.getOrgApiKey(params.orgId),
-      mcpUrl: 'https://resin.mpazbot.workers.dev/mcp'
+    // Execute all the queries from the original Goose recipe
+    const [revenue, donors, retention, pipeline, campaigns] = await Promise.all([
+      mcp.query('SELECT SUM(Amount), COUNT(Id) FROM Opportunity WHERE CloseDate = THIS_MONTH'),
+      mcp.query('SELECT COUNT(DISTINCT AccountId) FROM Opportunity WHERE Amount > 0'),
+      mcp.query('SELECT ... retention calculation'),
+      mcp.query('SELECT ... pipeline metrics'),
+      mcp.query('SELECT ... campaign performance')
+    ]);
+    
+    return {
+      revenue,
+      donors,
+      retention,
+      pipeline,
+      campaigns,
+      timestamp: new Date().toISOString()
     };
+  }
+  
+  async generateAnalysis(data: AnalysisData) {
+    const prompt = `
+      Generate a comprehensive fundraising analysis report.
+      
+      Current Metrics:
+      ${JSON.stringify(data.metrics)}
+      
+      Organization Context:
+      ${JSON.stringify(data.orgContext)}
+      
+      Best Practices to Consider:
+      ${data.knowledgeBase}
+      
+      Previous Report for Comparison:
+      ${data.previousReport}
+      
+      Generate a markdown report with:
+      1. Executive Summary
+      2. Revenue Analysis (YoY, QoQ, MoM)
+      3. Donor Retention Metrics
+      4. Pipeline Health
+      5. Campaign Performance
+      6. Key Trends
+      7. Areas of Concern
+    `;
     
-    // Execute and capture output
-    const result = await this.runGooseCommand(command, fullParams);
-    return result.output;
+    const response = await this.ai.complete(prompt, {
+      temperature: 0.4, // Analytical
+      max_tokens: 8000
+    });
+    
+    return response;
   }
   
   async storeReport(orgId: string, content: string, suffix: string = '') {
@@ -1013,45 +1304,11 @@ async function handleSlackMessage(event: SlackEvent) {
 ├── {orgId}/
 │   ├── fundraising-analysis/
 │   │   ├── 2024-11-01.md              # Monthly report
-│   │   ├── 2024-11-01-analysis.md     # AI analysis
+│   │   ├── 2024-11-01-recommendations.md  # AI recommendations
 │   │   ├── 2024-Q4.md                 # Quarterly report
-│   │   └── 2024-Q4-analysis.md        # Quarterly analysis
+│   │   └── 2024-Q4-recommendations.md # Quarterly recommendations
 │   ├── metadata.json                   # Report metadata
 │   └── preferences.json                # Delivery preferences
-```
-
-### Integration with Existing Goose Recipes
-
-Your existing `fundraising-data-analysis.yaml` recipe remains unchanged, but gets wrapped in this execution system:
-
-```typescript
-// How the Worker calls your existing Goose recipe
-async function runMonthlyAnalysis(orgId: string) {
-  // 1. Get the API key for this org
-  const apiKey = await getOrgApiKey(orgId);
-  
-  // 2. Execute your existing recipe
-  const result = await exec(`
-    goose run --recipe mill/recipes/fundraising-data-analysis.yaml \\
-      --params RESIN_API_KEY="${apiKey}" \\
-      --params REPORT_PERIOD="last_month" \\
-      --params OUTPUT_FORMAT="markdown"
-  `);
-  
-  // 3. Capture the output
-  const reportContent = result.stdout;
-  
-  // 4. Store in R2
-  const path = await storeInR2(orgId, reportContent);
-  
-  // 5. Run follow-up analysis
-  const analysis = await exec(`
-    ./scripts/mill/run-fundraising-followup.sh \\
-      --input ${path}
-  `);
-  
-  return { report: reportContent, analysis: analysis.stdout };
-}
 ```
 
 ### Configuration per Organization
@@ -1089,61 +1346,187 @@ async function runMonthlyAnalysis(orgId: string) {
 
 ## Implementation Phases
 
-### Phase 1: Intelligence Foundation (Weeks 1-2)
-✅ **Week 1: Knowledge Base**
+### Pre-Launch Development (November 20 - December 31, 2025)
+
+#### Week 1: Nov 20-27 - Intelligence Foundation (Priorities #1-2)
+✅ **Priority 1: Fundraising Knowledge Base**
 - Build 50+ fundraising best practice documents
 - Create retrieval API with semantic search
-- Set up R2 storage structure
+- Set up R2 storage structure for knowledge base
+- Store in Cloudflare KV/R2 as searchable documents
 
-⏳ **Week 2: Discovery Agent**
+⏳ **Priority 2: Discovery Agent Recipe**
+- Design Discovery Agent questions
 - Build automated discovery worker
-- Create conversational discovery bot
-- Implement continuous learning system
-- **Add report scheduler worker**
+- Create conversational discovery bot  
+- Store findings in structured format in KV
 
-### Phase 2: Core Infrastructure (Weeks 3-4)
-**Week 3: Slack Integration**
-- Slack webhook handler
-- Intent detection and routing
-- Response generation pipeline
-- **Manual report trigger commands**
+#### Week 2: Nov 27-Dec 4 - Semantic Layer & Consistency (Priorities #3-4)
+**Priority 3: Semantic Layer Implementation**
+- Donor routing rules (who handles which donors)
+- Staff assignments and territories
+- Business logic for prioritization
+- Data pulling guardrails
+- Consistency rules implementation
 
-**Week 4: Document Management & Reporting**
-- Upload handlers for Slack
-- Text extraction pipeline
-- Document indexing system
-- **Automated report execution**
-- **Report storage in R2**
-- **Delivery via Slack**
+**Priority 4: Document Upload System**
+- Cloudflare R2 for document storage
+- Support for PDFs, Word docs, spreadsheets
+- Categories: strategic plans, programs, campaigns, board reports
+- Parse and index for AI reference
+- Available to all Goose recipes
 
-### Phase 3: Launch Preparation (Weeks 5-6)
-**Week 5: Testing & Optimization**
-- End-to-end testing with sandbox orgs
-- Performance optimization
-- Cache strategy refinement
-- **Test scheduled reports**
+#### Week 3: Dec 4-11 - Slack MVP & Conversation Layer (Priorities #5-6)
+**Priority 5: Slack Integration MVP**
+- Cloudflare Worker handles Slack webhooks
+- Test Slack → Goose → MCP flow
+- Handle async processing (3-second limit)
+- Basic intent detection
+- "Thinking..." indicators
+- Thread support
 
-**Week 6: Pilot Launch (January 1)**
-- Deploy to production
-- Onboard 5 pilot customers
-- Begin daily monitoring
-- **Schedule first monthly reports**
+**Priority 6: Conversation & Confirmation Layer**
+- Parse user intent
+- Show exactly what will be changed
+- List any missing required fields
+- Get confirmation before executing
+- Execute and show result
+
+#### Week 4: Dec 11-18 - Data Analysis & Testing (Priorities #7-8)
+**Priority 7: Data Analysis Suite**
+- Create `recipes/data_analysis.yaml`
+- Comprehensive analysis covering:
+  - Donor retention rates
+  - Giving trends (YoY, MoM)
+  - Pipeline health
+  - Lapsed donor analysis
+  - Campaign performance metrics
+- Automated report scheduler
+
+**Priority 8: Testing Infrastructure**
+- Full Discovery Agent runs with test orgs
+- Semantic layer configuration testing
+- Document upload and parsing validation
+- Slack interaction flow testing
+- Data analysis generation testing
+- Consistency validation
+
+#### Week 5-6: Dec 18-31 - Polish & Prep (Priorities #9-10)
+**Priority 9: Multi-Tenant Support**
+- Org credential management
+- Isolated knowledge bases per org
+- Semantic layer per org
+- Document storage per org
+- Ready for multiple production orgs
+
+**Priority 10: January 1 Launch Preparation**
+- [ ] Production credentials ready
+- [ ] Discovery Agent tested and ready
+- [ ] Knowledge base fully populated
+- [ ] Data analysis templates polished
+- [ ] Slack bot operational
+- [ ] 5 orgs identified for immediate onboarding
+- [ ] Launch sequence documented
+
+### Phase 1: January 1-31 - Production Launch & Validation
+
+**Week 1-2: Rapid Onboarding**
+For each of 5 consulting clients:
+1. Run Discovery Agent (30-45 min session)
+2. Configure semantic layer
+3. Upload their key documents
+4. Generate initial data analysis
+5. Set up Slack integration
+6. Train primary users
+
+**Week 3-4: Iteration & Enhancement**
+- Refine Discovery Agent questions
+- Enhance knowledge base with missing topics
+- Improve consistency engine
+- Optimize slow queries
+- Add missing Slack commands
+
+**Success Metrics (January 31):**
+- ✅ 3+ testimonials collected
+- ✅ Users staying out of Salesforce 80% of time
+- ✅ 10+ hours saved per user
+- ✅ NPS >60
+
+### Phase 2: February-March - Scale & Enhancement
+
+**Enhanced Workflows:**
+- Email sequences with voice matching
+- Grant research and writing assistant
+- Board report generator
+- Campaign performance analyzer
+- Event planning assistant
+
+**Automated Reporting:**
+- Daily priorities via Slack
+- Weekly summaries
+- Monthly board packages
+- Quarterly analysis
+
+### Phase 3: April-June - Platform Evolution
+
+**Web Application (Q2 2025):**
+- Chat interface
+- Report library
+- Document management
+- Team collaboration
+
+**Advanced Features:**
+- Predictive donor scoring
+- Automated campaign suggestions
+- Peer organization benchmarking
+- AI-powered coaching
 
 ---
 
 ## Key Technical Decisions
 
+### Architecture Decisions (Addressing Roadmap Questions)
+
+**Pure Cloudflare Architecture**
+- **Decision:** Everything in Cloudflare Workers
+- **No external dependencies:** No Goose, no containers, no external runtime
+- **Single deployment:** `wrangler deploy` handles everything
+- **True serverless:** Scales automatically, pay per request
+
+**Knowledge Base Format?**
+- **Decision:** Markdown with YAML frontmatter
+- **Why:** Easy for LLMs to consume, human-readable, version control friendly
+- **Structure:** 50+ documents in `/knowledge-base/fundraising/[category]/`
+
+**Document Storage: R2 vs KV?**
+- **Decision:** R2 for documents, KV for metadata/embeddings
+- **R2:** Large documents (PDFs, Word docs, reports)
+- **KV:** Embeddings, indexes, cache, session state
+- **Why:** Cost-effective, R2 for blob storage, KV for fast lookups
+
+**Consistency Cache Strategy?**
+- **Decision:** Cloudflare KV (not Redis)
+- **Why:** Native to platform, no additional infrastructure
+- **TTLs:** 5-hour for complex queries, 1-hour for simple, 24-hour for reports
+
+**Discovery: One-time vs Continuous?**
+- **Decision:** Continuous discovery process
+- **Automated:** Weekly scans for changes
+- **Conversational:** Triggered by detected changes or user request
+- **Why:** Organizations evolve, need to stay current
+
 ### Why Cloudflare Workers?
 - **Edge computing:** Low latency globally
 - **Serverless:** No infrastructure management
-- **Cost-effective:** Free tier covers initial usage
+- **Cost-effective:** Free tier covers initial usage (~$0/month for Phase 1)
 - **Integrated storage:** R2, KV, and Durable Objects in one platform
+- **Native integrations:** Built-in cron, webhooks, API gateway
 
-### Why Not Goose for Conversations?
-- **Goose is for recipes:** Best for defined workflows and data analysis
-- **Need state management:** Conversations require persistent state
-- **Direct control:** Need fine-grained control over conversation flow
-- **Real-time requirements:** Slack's 3-second timeout needs custom handling
+### Why No External Dependencies?
+- **Simplicity:** One platform, one deployment
+- **Reliability:** No inter-service communication failures
+- **Cost:** No additional infrastructure costs
+- **Maintenance:** Single codebase to maintain
 
 ### Why Separate Discovery from Daily Operations?
 - **Different cadences:** Discovery is periodic, operations are real-time
