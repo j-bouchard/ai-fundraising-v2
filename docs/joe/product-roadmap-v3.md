@@ -32,6 +32,8 @@ We're building an AI fundraising strategist that **keeps nonprofit development t
 
 ---
 
+## Product Vision & Architecture
+
 ## High-Level Architecture
 
 ```
@@ -83,7 +85,9 @@ We're building an AI fundraising strategist that **keeps nonprofit development t
 
 Note: Pure Cloudflare architecture - no external dependencies
 All services are Cloudflare Workers
+```
 
+---
 
 ### Intelligence Layer Components
 
