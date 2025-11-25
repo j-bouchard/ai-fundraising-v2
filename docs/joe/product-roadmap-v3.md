@@ -34,39 +34,54 @@ We're building an AI fundraising strategist that **keeps nonprofit development t
 
 ## Product Vision & Architecture
 
-### High-Level Architecture (Updated)
+┌──────────────────────────────────────────────────────┐
+│                   USER INTERFACES                     │
+├──────────────────────────────────────────────────────┤
+│  • Slack Bot (Primary - December 15)                  │
+│  • Automated Reports (January 1)                      │
+│  • Web App (Future - Q2 2025)                        │
+└────────────────────┬─────────────────────────────────┘
+                     │
+                     ▼
+┌──────────────────────────────────────────────────────┐
+│             CLOUDFLARE WORKER EDGE                    │
+├──────────────────────────────────────────────────────┤
+│  Main Request Router (index.ts)                       │
+│  • Slack webhook handler                              │
+│  • Intent detection                                   │
+│  • Session management                                 │
+│  • Response orchestration                             │
+│  • Report scheduling (Cron triggers)                  │
+└────────────────────┬─────────────────────────────────┘
+                     │
+    ┌────────┬───────┼───────┬────────┬────────────┐
+    ▼        ▼       ▼       ▼        ▼            ▼
+┌────────┐┌──────┐┌──────┐┌────────┐┌────────┐┌──────────┐
+│Knowledge││ Org  ││Sales-││Discovery││Fund-   ││Semantic  │
+│  Base  ││Context││force ││ Agent  ││raising ││  Layer   │
+│ Service││Service││ MCP  ││Service ││Analysis││ Service  │
+│        ││       ││Server││        ││ Worker ││          │
+└────────┘└──────┘└──────┘└────────┘└────────┘└──────────┘
+    │        │       │       │         │           │
+    ▼        ▼       ▼       ▼         ▼           ▼
+┌──────────────────────────────────────────────────────┐
+│                  STORAGE LAYER                        │
+├──────────────────────────────────────────────────────┤
+│  Cloudflare R2:                                       │
+│  • /knowledge-base/ - Fundraising best practices      │
+│  • /org-profiles/ - Discovery findings & context      │
+│  • /documents/ - Uploaded strategic docs              │
+│  • /reports/ - Generated analysis reports             │
+│                                                       │
+│  Cloudflare KV:                                      │
+│  • Session states (conversations)                     │
+│  • Response cache (5-hour TTL)                       │
+│  • Embeddings index (semantic search)                │
+│  • Org credentials (encrypted)                       │
+└──────────────────────────────────────────────────────┘
 
-```
-┌─────────────────────────────────────────────────┐
-│              DELIVERY LAYER                     │
-│                                                 │
-│  Priority: Slack Bot (MVP by Dec 15)            │
-│  Reports: Automated Analysis (Monthly/Quarterly) │
-│  Future: Web App (Q2 2025)                      │
-└────────────┬────────────────────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────────────────────┐
-│        CLOUDFLARE WORKER EDGE                   │
-│                                                 │
-│  Main Request Router                            │
-│  • Slack webhook handler                        │
-│  • Intent detection & routing                   │
-│  • Session management (KV)                      │
-│  • Response orchestration                       │
-│  • Report scheduling (Cron)                     │
-└────────────┬────────────────────────────────────┘
-             │
-    ┌────────┼────────┬────────────┬────────────┐
-    ▼        ▼        ▼            ▼            ▼
-┌───────┐┌───────┐┌─────────┐┌─────────┐┌──────────┐
-│Knowledge││ Org  ││Discovery││Salesforce││Fundraising│
-│  Base  ││Context││  Agent  ││   MCP   ││  Analysis │
-│Service ││Service││ Service ││  Server ││  Worker  │
-└───────┘└───────┘└─────────┘└─────────┘└──────────┘
-
-Note: ALL services are Cloudflare Workers
-No external dependencies (no Goose, no containers)
+Note: Pure Cloudflare architecture - no external dependencies
+All services are Cloudflare Workers
 ```
 
 ### Intelligence Layer Components
