@@ -14,7 +14,8 @@
       "Bash(gh issue view:*)",
       "mcp__linear__create_issue",
       "Bash(mkdir:*)",
-      "Bash(uv run pytest:*)"
+      "Bash(uv run pytest:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

@@ -716,12 +716,46 @@ Agent: "Task created: [link to Salesforce record]"
 
 ## V5 Planning (Future - Client-Facing Release)
 
-### Slack Integration
+### Slack Integration - Explored but Not a V4 Constraint
+
+**Spike Conducted:** A proof-of-concept was built at [cloudflare-agent-spike](https://github.com/mpazaryna/cloudflare-agent-spike) to validate Cloudflare Agents as a unified entry point for Goose, Slack, and HTTP requests.
+
+**What the Spike Proved:**
+- Cloudflare Workers can serve as a unified HTTP endpoint (`POST /ask`) accepting requests from multiple clients
+- Slack-compatible payloads (using `"text"` field) work alongside standard `"question"` fields
+- Sub-second response times are achievable for simple keyword-matched responses
+- State isolation between concurrent requests works correctly
+
+**Why Slack is NOT Driving V4 Architecture:**
+
+The spike validated that Slack *can* integrate with our architecture, but also revealed why designing around Slack's constraints would be architecturally harmful:
+
+| Slack Constraint | Impact on Architecture | V4 Decision |
+|------------------|----------------------|-------------|
+| 3-second response timeout | Forces async patterns, "thinking..." indicators, complex webhook flows | V4 agents can take 30+ seconds for complex analysis—this is a feature, not a bug |
+| Synchronous request/response | Limits multi-step reasoning and tool use | Claude Code agents benefit from iterative tool calls, which Slack's model doesn't support well |
+| Message-based interface | Requires intent detection, response formatting for chat | MCP clients (Goose, Claude Desktop) provide richer context and tool awareness |
+| Bolt/SDK complexity | Additional integration overhead | Direct MCP protocol is cleaner and more powerful |
+
+**The Core Insight:**
+
+Building V4 to work "ideally with Slack someday" would constrain the agentic system's power. The strength of Claude Code + MCP is precisely that it's *not* limited by chat interface constraints:
+- Agents can run multi-minute analysis workflows
+- Complex multi-tool orchestration is natural
+- Rich structured outputs (tables, code, analysis) are first-class
+- No artificial response time pressure
+
+**V5 Slack Integration Strategy:**
+
+When Slack integration becomes a priority, it will be a *wrapper* around V4—not a constraint on V4:
 - Expose V4 agents via Slack bot
-- Handle async processing (Slack's 3-second limit)
-- Thread support
-- "Thinking..." indicators
-- Intent detection layer
+- Handle async processing (Slack's 3-second limit) through queuing
+- Thread support for ongoing conversations
+- "Thinking..." indicators during long operations
+- Intent detection layer to route to appropriate agents
+- Summarized responses suitable for chat context
+
+**Key Principle:** V4 builds the powerful, unconstrained agentic system. V5 adds a Slack "viewport" into that system—Slack adapts to the agents, not the other way around.
 
 ### Additional Delivery Channels
 - Web application (chat interface)
