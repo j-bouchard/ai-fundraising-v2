@@ -27,20 +27,18 @@ We're building an AI fundraising strategist that **keeps nonprofit development t
 - MCP server rewritten in TypeScript for Cloudflare
 - Works with Goose for orchestration
 - MCP should work with both NPSP and Nonprofit Cloud (needs testing)
-- No production org access until January 1, 2026
-- Intelligence layer is the key differentiator (must build before Jan 1)
 
 **Deployment Path:**
 1. **Now:** Joe's sandbox for development and testing
 2. **Next:** Early adopter client org to validate multi-tenant workflow
 3. **January 1:** Joe uses across his full consulting client portfolio
 
-**January 1 Launch Goals:**
+** v4 Goals:**
 - Full data analysis capability ready for Joe's consulting delivery
 - Joe can run analysis on any client org during engagements
 - Org discovery system operational
 - Fundraising expertise knowledge base embedded
-- Multi-tenant workflow validated with early adopter
+- Multi-tenant workflow validated
 
 ---
 
@@ -56,7 +54,7 @@ We're building an AI fundraising strategist that **keeps nonprofit development t
 **Deployment Sequence:**
 1. Joe's sandbox (development/testing) — **Current**
 2. Early adopter client org (multi-tenant validation) — **Needed**
-3. Joe's full client portfolio (January 1 launch)
+3. Joe's full client portfolio
 
 ### V5 (Future) - Client-Facing Product
 - Slack integration for end-user access
@@ -339,7 +337,7 @@ invalidate_cache(pattern)        - Clear matching cache entries
 
 ---
 
-## Critical Path to January 1 Launch
+## Critical Path
 
 ### Resource Allocation
 
@@ -967,29 +965,29 @@ fundraising-assistant/
 
 *Detailed task tracking and date assignments managed in project management tooling (e.g., Linear).*
 
-### Milestone 1 (Hours 1-25):
+### Milestone 1 
 - [ ] Adapt orchestrator for fundraising agents
 - [ ] Set up development environment
 - [ ] Start building fundraising knowledge base integration
 - [ ] Begin Discovery Agent (requires Joe's templates)
 
-### Milestone 2 (Hours 26-50):
+### Milestone 2 
 - [ ] Complete Discovery Agent
 - [ ] Implement semantic layer
 - [ ] Implement document upload system (PDF + CSV via LlamaIndex)
 
-### Milestone 3 (Hours 51-75):
+### Milestone 3 
 - [ ] Build Data Analysis Agent
 - [ ] Implement confirmation layer
 - [ ] Create core commands
 
-### Milestone 4 (Hours 76-100):
+### Milestone 4
 - [ ] Build supporting agents (prioritization, email, research) — P2, cut if needed
 - [ ] Testing with sandbox orgs
 - [ ] MCP client integration testing
 - [ ] Error handling implementation
 
-### Milestone 5 (Hours 101-120):
+### Milestone 5 
 - [ ] Multi-tenant finalization
 - [ ] Launch preparation
 - [ ] Buffer for unknowns
